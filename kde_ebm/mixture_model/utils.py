@@ -41,7 +41,7 @@ def fit_all_gmm_models(X, y, implement_fixed_controls=False):
     msk = np.where(y<2)[0]
     X = X[msk]
     y = y[msk]
-    
+
     n_particp, n_biomarkers = X.shape
     mixture_models = []
     for i in range(n_biomarkers):
@@ -55,12 +55,12 @@ def fit_all_gmm_models(X, y, implement_fixed_controls=False):
     return mixture_models
 
 
-def fit_all_kde_models(X, y, implement_fixed_controls=False, patholog_dirn_array=None):
+def fit_all_kde_models(X, y, implement_fixed_controls=False, patholog_dirn_array=None, alpha=0.3, beta=None, quant=0.9):
     #* Extract only the first two diagnoses
     msk = np.where(y<2)[0]
     X = X[msk]
     y = y[msk]
-    
+
     n_particp, n_biomarkers = X.shape
     kde_mixtures = []
     for i in range(n_biomarkers):
@@ -73,7 +73,41 @@ def fit_all_kde_models(X, y, implement_fixed_controls=False, patholog_dirn_array
         #     min((bio_X[bio_y==1])),max((bio_X[bio_y==1]))
         #     )
         # )
-        kde = KDEMM()
-        kde.fit(bio_X, bio_y,implement_fixed_controls, patholog_dirn=patholog_dirn)
+        kde = KDEMM(alpha=alpha, beta=beta)
+        kde.fit(bio_X, bio_y,implement_fixed_controls, patholog_dirn=patholog_dirn, outlier_controls_quantile=quant)
+        kde_mixtures.append(kde)
+    return kde_mixtures
+
+def fit_all_kde_models_plus(X, y, implement_fixed_controls=False, patholog_dirn_array=None, alphas=None, betas=None, quant=0.9):
+    #* Extract only the first two diagnoses
+    msk = np.where(y<2)[0]
+    X = X[msk]
+    y = y[msk]
+
+    n_particp, n_biomarkers = X.shape
+
+    #if no alpha value is provided, set to 0.3 (kde_ebm default)
+    if alphas is None:
+        alphas = 0.3
+    #if only a scalar is provided mk copy for each biomarker
+    if type(alphas) is not list:
+        alphas = [alphas] * n_biomarkers
+
+    #if no beta is provided set equal to alpha
+    if betas is None:
+        betas = alphas
+    #if only a scalar is provided mk copy for each biomarker
+    if type(betas) is not list:
+        betas = [betas] * n_biomarkers
+
+    kde_mixtures = []
+    for i in range(n_biomarkers):
+        patholog_dirn = patholog_dirn_array[i]
+        bio_X = X[:, i]
+        bio_y = y[~np.isnan(bio_X)]
+        bio_X = bio_X[~np.isnan(bio_X)]
+
+        kde = KDEMM(alpha=alphas[i], beta=betas[i])
+        kde.fit(bio_X, bio_y,implement_fixed_controls, patholog_dirn=patholog_dirn, outlier_controls_quantile=quant)
         kde_mixtures.append(kde)
     return kde_mixtures
