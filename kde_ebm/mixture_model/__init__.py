@@ -5,6 +5,7 @@ from .kde import KDEMM
 from .utils import get_prob_mat
 from .utils import fit_all_gmm_models
 from .utils import fit_all_kde_models
+from .utils import fit_all_kde_models_plus
 
 __all__ = ['ParametricMM', 'get_prob_mat', 'fit_all_gmm_models',
-           'KDEMM', 'fit_all_kde_models']
+           'KDEMM', 'fit_all_kde_models','fit_all_kde_models_plus']
